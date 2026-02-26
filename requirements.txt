@@ -1,0 +1,21 @@
+fastapi>0.115
+uvicorn>0.34
+pydantic>2.0
+langgraph>0.3
+langchain-anthropic
+langchain-openai
+langchain-community
+tavily-python
+aiosqlite
+pytest>7.0
+# sqlalchemy>2.0
+# psycopg2-binary>2.9
+# alembic>1.7
+# pytest-asyncio>0.18
+# httpx>0.24
+# python-dotenv>0.19
+# passlib>1.7
+# bcrypt>3.2
+# python-jose>3.0
+# python-multipart>0.0.5
+# pytest-cov>3.0
