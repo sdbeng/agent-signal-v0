@@ -16,7 +16,8 @@ Running agent i can hit with a curl or simple UI, deployed somewhere accessible.
 
 ## Stage-0 structure
 
-safety-agent-v0/
+```plaintext
+agent-signal-v0/
 ├── app/
 │   ├── main.py          # FastAPI app + lifespan
 │   ├── graph.py         # LangGraph StateGraph (3 nodes)
@@ -27,3 +28,23 @@ safety-agent-v0/
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
+```
+
+<details>
+<summary><b>📁 Project Structure v1-soon</b></summary>
+
+```plaintext
+agent-signal-v1/
+├── app/
+│   ├── main.py          #
+│   ├── graph.py         # 
+│   ├── state.py         # 
+│   ├── tools.py         # 
+│   └── schemas.py       # 
+├── .env.example
+├── requirements.txt
+├── Dockerfile
+└── README.md
+```
+
+</details>
