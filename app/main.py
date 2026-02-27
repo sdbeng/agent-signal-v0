@@ -2,12 +2,17 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file FIRST, before any app imports
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from app.graph import build_graph
 from app.schemas import AgentRequest
 import json, uuid
+import logging
+from openai import RateLimitError
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 agent_graph = None # Global variable to hold the compiled graph
 
@@ -23,22 +28,42 @@ app = FastAPI(title="Agent Signal", lifespan=lifespan) # Create FastAPI app with
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "version": "0.1.1"}
+    import os
+    return {
+        "status": "ok",
+        "version": "0.1.1",
+        "model": os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+        "tools_available": ["TavilySearchResults"]
+    }
 
 @app.post("/agent/run")
 async def run_agent(req: AgentRequest):
     session_id = req.session_id or str(uuid.uuid4()) # Use provided session_id or generate a new one
     config = {"configurable": {"thread_id": session_id}} # Create config with the session_id as thread_id
-    result = await agent_graph.ainvoke(
-        {"messages": [("user", req.prompt)], "session_id": session_id, "safety_flagged": False}, # Initial state with user message and session info
-        config=config, # Pass the config to the graph invocation
-
-    )
-    return {
-        "session_id": session_id,
-        "response": result["messages"][-1].content, # Return the content of the last message as the response
-        "safety_flagged": result["safety_flagged"] # Include the safety flag status in the response 
-    }
+    
+    try:
+        logger.info(f"Processing request for session {session_id}: {req.prompt[:50]}...")
+        result = await agent_graph.ainvoke(
+            {"messages": [("user", req.prompt)], "session_id": session_id, "safety_flagged": False}, # Initial state with user message and session info
+            config=config, # Pass the config to the graph invocation
+        )
+        return {
+            "session_id": session_id,
+            "response": result["messages"][-1].content, # Return the content of the last message as the response
+            "safety_flagged": result["safety_flagged"] # Include the safety flag status in the response 
+        }
+    except RateLimitError as e:
+        logger.error(f"Rate limit error: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail="The AI model is temporarily rate-limited. Please try again in a few moments, or add your own API key at https://openrouter.ai/settings/integrations"
+        )
+    except Exception as e:
+        logger.error(f"Error processing request: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred processing your request: {str(e)}"
+        )
 
 @app.post("/agent/stream")
 async def stream_agent(req: AgentRequest):
