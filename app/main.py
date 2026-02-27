@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file FIRST, before any app imports
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from langgraph.checkpoint.sqlite.aio import AsyncSQLiteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from app.graph import build_graph
 from app.schemas import AgentRequest
 import json, uuid
@@ -11,8 +14,9 @@ agent_graph = None # Global variable to hold the compiled graph
 @asynccontextmanager
 async def lifespan(app: FastAPI): #lifespan function to initialize the graph before the server starts
     global agent_graph # Declare that we are using the global variable
-    async with AsyncSQLiteSaver.from_conn_string("checkpoints.db") as saver: # Create an async SQLite saver for state persistence
-        agent_graph = build_graph(saver) # Build and compile the graph, storing it in the global variable
+    async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as checkpointer: # Create an async SQLite saver for state persistence
+        # await checkpointer.setup() # Ensure the database and tables are set up
+        agent_graph = build_graph(checkpointer) # Build and compile the graph, storing it in the global variable
         yield # Yield control back to FastAPI to start the server
 
 app = FastAPI(title="Agent Signal", lifespan=lifespan) # Create FastAPI app with the custom lifespan

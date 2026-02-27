@@ -3,7 +3,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
-from langgraph.checkpoint.sqlite.aio import AsyncSQLiteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from app.state import AgentState
 
 llm = ChatAnthropic(model="claude-sonnet-4-5")
@@ -37,7 +37,7 @@ def should_use_tools(state: AgentState):
     return END # Otherwise, end the graph execution
 
 
-def build_graph(checkpointer: AsyncSQLiteSaver):
+def build_graph(checkpointer):
     g = StateGraph(AgentState) # Create a new graph with the AgentState type
     g.add_node("safety_screener", safety_screener) # Add safety screener node
     g.add_node("agent", agent_node) # Add agent node
