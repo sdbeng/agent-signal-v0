@@ -1,12 +1,17 @@
-
-from langchain_anthropic import ChatAnthropic
+import os
+from langchain_openai import ChatOpenAI
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
-from langgraph.checkpoint.sqlite.aio import AsyncSQLiteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from app.state import AgentState
 
-llm = ChatAnthropic(model="claude-sonnet-4-5")
+# Initialize LLM from environment variables
+llm = ChatOpenAI(
+    model=os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1"
+)
 tools = [TavilySearchResults(max_results=2)]
 llm_with_tools = llm.bind_tools(tools)
 
@@ -15,8 +20,7 @@ def safety_screener(state: AgentState):
     last_msg = state["messages"][-1].content.lower() # Get the content of the last message and convert it to lowercase
     flagged_terms = ["violence", "self-harm", "hate speech", "harm", "weapon", "exploit", "bypass"] # Example flagged terms
     flagged = any(term in last_msg for term in flagged_terms) # Check if any flagged term is in the last message
-    state["safety_flagged"] = flagged # Update the state with the safety flag
-    return state
+    return {"safety_flagged": flagged} # Return updated state without mutation
 
 # Node 2: Agent (LLM + tools)
 def agent_node(state: AgentState):
@@ -37,7 +41,7 @@ def should_use_tools(state: AgentState):
     return END # Otherwise, end the graph execution
 
 
-def build_graph(checkpointer: AsyncSQLiteSaver):
+def build_graph(checkpointer):
     g = StateGraph(AgentState) # Create a new graph with the AgentState type
     g.add_node("safety_screener", safety_screener) # Add safety screener node
     g.add_node("agent", agent_node) # Add agent node
