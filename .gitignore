@@ -21,11 +21,12 @@ build/
 .coverage
 htmlcov/
 
-# Database / checkpoints
+# Database / checkpoints (runtime files, never commit)
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
-checkpoints.db
 
 # IDE
 .vscode/

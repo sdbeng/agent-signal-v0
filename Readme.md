@@ -1,4 +1,4 @@
-# LanNGraph Prototype - Minimum Viable Safety Agent
+# LangGraph Prototype - Minimum Viable Safety Agent - mvp
 
 ## Goal
 
@@ -9,10 +9,10 @@ Running agent i can hit with a curl or simple UI, deployed somewhere accessible.
 - Single-agent graph - 3 nodes
 - 1 tool(web search or echo)
 - FastAPI with `/run` + `/stream` endpoints
-- SQLite checkpointer(not yet Postgres setup)
+- SQLite checkpointer(later Postgres setup)
 - Railway deploy
 - .env config
-- LangSmith free tracing
+- LangSmith free tracing(opt)
 
 ## Stage-0 structure
 
